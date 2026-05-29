@@ -1,0 +1,28 @@
+/* El selector html, body aplica directamente a las etiquetas principales */
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  height: 100%;
+  background-color: #0a0f14;
+  overflow-x: hidden; /* Evita que aparezca una barra de desplazamiento horizontal */
+}
+
+/* Reset para todos los elementos internos */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+input::placeholder {
+  color: #3a5060;
+}
+
+input:focus {
+  border-color: #00d4f5 !important;
+}
+
+button:not([disabled]):hover {
+  filter: brightness(1.1);
+}
