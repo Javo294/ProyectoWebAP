@@ -1,7 +1,6 @@
 import React from "react";
 import PrimaryButton from "./PrimaryButton";
 
-// 1. Interfaz limpia para las propiedades
 interface DonationNotFoundProps {
   onRetry?: () => void;
 }
@@ -9,7 +8,6 @@ interface DonationNotFoundProps {
 const DonationNotFound: React.FC<DonationNotFoundProps> = ({ onRetry }) => {
   return (
     <div style={styles.wrapper}>
-      {/* Encapsulamos el icono por accesibilidad y consistencia visual */}
       <span style={styles.icon} role="img" aria-label="Carita triste">
         ☹
       </span>
@@ -22,7 +20,6 @@ const DonationNotFound: React.FC<DonationNotFoundProps> = ({ onRetry }) => {
   );
 };
 
-// 2. Tipado de objeto CSS unificado sin usar 'as const' planos
 const styles: { [key: string]: React.CSSProperties } = {
   wrapper: {
     border: "1px solid #2e3f50",
@@ -33,14 +30,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: "16px",
     textAlign: "center",
-    maxWidth: "500px", // Limitamos el ancho para que la tarjeta de error no se deforme en pantallas gigantes
+    maxWidth: "500px",
     width: "100%",
     boxSizing: "border-box",
     backgroundColor: "transparent",
+    margin: "0 auto", // <--- ESTO ASEGURA EL CENTRADO HORIZONTAL
   },
   icon: {
     fontSize: "44px",
-    color: "#5a7080", // Un tono ligeramente más claro para que resalte estéticamente en el fondo oscuro
+    color: "#5a7080",
     lineHeight: 1,
     userSelect: "none",
   },
@@ -49,13 +47,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#ffffff",
     fontSize: "22px",
     fontWeight: "700",
-    fontFamily: "'Courier New', monospace",
+    fontFamily: "'Inter', sans-serif",
   },
   subtitle: {
     margin: 0,
     color: "#5a7080",
     fontSize: "13px",
-    fontFamily: "'Courier New', monospace",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
   },
   btn: {
     marginTop: "8px",

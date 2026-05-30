@@ -1,5 +1,5 @@
 // 1. Importamos el componente Register desde la carpeta pages con su ruta exacta
-import Register from './pages/Register';
+import Register from './pages/Trazabilidad';
 
 function App() {
   return (

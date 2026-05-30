@@ -6,7 +6,6 @@ import DonationTimeline from "../components/DonationTimeline";
 import DonationNotFound from "../components/DonationNotFound";
 import TransitDetails from "../components/TransitDetails";
 
-// Definimos el tipo estricto para los estados de la línea de tiempo
 type StepStatus = "completed" | "active" | "pending";
 
 interface TimelineStep {
@@ -15,7 +14,6 @@ interface TimelineStep {
   status: StepStatus;
 }
 
-// Estructura completa de los datos de donación para TypeScript
 interface DonationData {
   codigo: string;
   donante: string;
@@ -31,44 +29,118 @@ interface DonationData {
   steps: TimelineStep[];
 }
 
-// Mock de donación encontrada
-const mockDonation: DonationData = {
-  codigo: "DON-2025-001",
-  donante: "Juan P. Zuñiga",
-  tipo: "Alimentos",
-  centro: "Cruz Roja Cartago",
-  fechaRegistro: "02/07/2025",
-  transit: {
-    date: "18/05/2025",
-    transportista: "Carlos M.",
-    vehiculo: "Camión #4",
-    destino: "Hatillo, San José",
-  },
-  steps: [
-    { label: "Recibido", date: "02/05/2025 9:14 am", status: "completed" },
-    { label: "En tránsito", date: "18/05/2025 12:24 am", status: "active" },
-    { label: "Entregado", status: "pending" },
-  ],
-};
-
-type ViewState = "result" | "notFound" | "idle";
+type ViewState = "result" | "notFound" | "idle" | "loading" | "error";
 
 const Trazabilidad: React.FC = () => {
   const [searchCode, setSearchCode] = useState("");
-  const [viewState, setViewState] = useState<ViewState>("result");
-  const [donation] = useState<DonationData>(mockDonation);
+  const [viewState, setViewState] = useState<ViewState>("idle");
+  const [donation, setDonation] = useState<DonationData | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = () => {
-    if (searchCode.trim().toUpperCase() === mockDonation.codigo) {
+  // Mapear respuesta del backend a formato del componente
+  const mapearDonacionAlUI = (data: any): DonationData => {
+    const estados = ["recibido", "clasificado", "en_transito", "entregado"];
+    const estadoActual = data.estado;
+    const indiceEstadoActual = estados.indexOf(estadoActual);
+
+    // Generar steps de la timeline basado en eventos reales
+    const steps: TimelineStep[] = estados.map((estado, index) => {
+      const evento = data.eventos.find((e: any) => e.estado === estado);
+      
+      // Reemplazamos el guion bajo por un espacio en blanco
+      const estadoLimpio = estado.replace("_", " ");
+
+      return {
+        label: estadoLimpio.charAt(0).toUpperCase() + estadoLimpio.slice(1),
+        date: evento ? new Date(evento.fecha).toLocaleString("es-CR") : undefined,
+        status:
+          index < indiceEstadoActual
+            ? "completed"
+            : index === indiceEstadoActual
+              ? "active"
+              : "pending",
+      };
+    });
+
+    return {
+      codigo: data.codigo,
+      donante: "Donante (Anónimo)",
+      tipo: data.descripcion,
+      centro: "Centro de acopio",
+      fechaRegistro: new Date(data.fechaRegistro).toLocaleDateString("es-CR"),
+      transit: {
+        date: data.fechaEstimadaEntrega,
+        transportista: "Pendiente asignación",
+        vehiculo: "Pendiente",
+        destino: "Pendiente",
+      },
+      steps,
+    };
+  };
+
+  const handleSearch = async () => {
+    if (!searchCode.trim()) {
+      setErrorMessage("Por favor ingresa un código de rastreo");
+      setViewState("error");
+      return;
+    }
+
+    setIsLoading(true);
+    setViewState("loading");
+    setErrorMessage("");
+
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/v1/donations/track/${searchCode.toUpperCase().trim()}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      // SI DA ERROR 404 -> MOSTRAR AUTOMÁTICAMENTE EL COMPONENTE DONATION NOT FOUND
+      if (response.status === 404) {
+        setDonation(null);
+        setViewState("notFound");
+        return;
+      }
+
+      if (!response.ok) {
+        console.error("Error del servidor:", data);
+        if (data.error && data.error.mensaje) {
+          throw new Error(data.mensaje || "Error al consultar la donación");
+        }
+        throw new Error(data.mensaje || "Error desconocido del servidor");
+      }
+
+      // Mapear datos y mostrar resultado exitoso
+      const mappedDonation = mapearDonacionAlUI(data.datos);
+      setDonation(mappedDonation);
       setViewState("result");
-    } else {
-      setViewState("notFound");
+    } catch (err: any) {
+      setErrorMessage(err.message || "No se pudo conectar con el servidor");
+      setViewState("error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRetry = () => {
     setSearchCode("");
+    setDonation(null);
+    setErrorMessage("");
     setViewState("idle");
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && !isLoading) {
+      handleSearch();
+    }
   };
 
   return (
@@ -85,8 +157,8 @@ const Trazabilidad: React.FC = () => {
       />
 
       <main style={styles.main}>
-        {/* 1. ESTADO: RESULTADO ENCONTRADO */}
-        {viewState === "result" && (
+        {/* RESULTADO ENCONTRADO */}
+        {viewState === "result" && donation && (
           <section style={styles.section}>
             <Breadcrumb
               items={[
@@ -96,9 +168,7 @@ const Trazabilidad: React.FC = () => {
             />
             <div style={styles.codeHeader}>
               <h2 style={styles.codeLabel}>Estado de tu donación</h2>
-              <h1 style={styles.code}>
-                {donation.codigo}
-              </h1>
+              <h1 style={styles.code}>{donation.codigo}</h1>
               <span style={styles.changeCode} onClick={handleRetry}>
                 ¿No es tu código? Presiona aquí para buscar otro
               </span>
@@ -122,37 +192,62 @@ const Trazabilidad: React.FC = () => {
           </section>
         )}
 
-        {/* 2. SECCIÓN DE BÚSQUEDA */}
-        {(viewState === "idle" || viewState === "result") && (
+        {/* ESTADO: CARGANDO */}
+        {viewState === "loading" && (
+          <section style={styles.section}>
+            <div style={styles.loadingContainer}>
+              <div style={styles.spinner}></div>
+              <p style={styles.loadingText}>Buscando tu donación...</p>
+            </div>
+          </section>
+        )}
+
+        {/* ESTADO: NO ENCONTRADO (Muestra tu componente DonationNotFound) */}
+        {viewState === "notFound" && (
+          <section style={styles.section}>
+            <DonationNotFound onRetry={handleRetry} />
+          </section>
+        )}
+
+        {/* ESTADO: ERROR EN EL SERVIDOR / CAMPO VACÍO */}
+        {viewState === "error" && errorMessage && (
+          <section style={styles.section}>
+            <div style={styles.alertContainer}>
+              <div style={styles.errorAlert}>{errorMessage}</div>
+            </div>
+          </section>
+        )}
+
+        {/* SECCIÓN DE BÚSQUEDA */}
+        {(viewState === "idle" || viewState === "result" || viewState === "error" || viewState === "notFound") && (
           <section style={styles.searchSection}>
             <h2 style={styles.searchTitle}>Rastrear otra donación</h2>
             <p style={styles.searchSubtitle}>
               Ingresa tu código de seguimiento para ver el estado en tiempo real. No necesitas cuenta
             </p>
-            
+
             <div style={styles.searchBar}>
               <input
                 type="text"
                 placeholder="Ingresa tu código (ej. DON-2026-XXXX)"
                 value={searchCode}
                 onChange={(e) => setSearchCode(e.target.value)}
+                onKeyPress={handleKeyPress}
                 style={styles.inlineInput}
+                disabled={isLoading}
               />
-              <button onClick={handleSearch} style={styles.inlineButton}>
-                Rastrear
+              <button
+                onClick={handleSearch}
+                style={styles.inlineButton}
+                disabled={isLoading}
+              >
+                {isLoading ? "Buscando..." : "Rastrear"}
               </button>
             </div>
 
             <span style={styles.searchHelper}>
               Tu código fue generado al registrar tu donación en el centro de acopio
             </span>
-          </section>
-        )}
-
-        {/* 3. ESTADO: NO ENCONTRADO */}
-        {viewState === "notFound" && (
-          <section style={styles.section}>
-            <DonationNotFound onRetry={handleRetry} />
           </section>
         )}
       </main>
@@ -162,6 +257,12 @@ const Trazabilidad: React.FC = () => {
         body { background-color: #0a0f14; }
         input::placeholder { color: #3a5060; }
         input:focus { outline: none; }
+        input:disabled { opacity: 0.6; cursor: not-allowed; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
     </div>
   );
@@ -200,20 +301,20 @@ const styles: { [key: string]: React.CSSProperties } = {
   codeLabel: {
     color: "#ffffff",
     fontSize: "20px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
   },
   code: {
     color: "#00d4f5",
     fontSize: "36px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     letterSpacing: "0.02em",
   },
   changeCode: {
     color: "#00d4f5",
     fontSize: "13px",
-    fontWeight: "500", // Inter Bold
+    fontWeight: "500",
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
     marginTop: "4px",
@@ -229,6 +330,45 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "#1A1D23",
     boxSizing: "border-box",
   },
+  loadingContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+    padding: "60px 0",
+  },
+  spinner: {
+    width: "40px",
+    height: "40px",
+    border: "3px solid #00d4f5",
+    borderTop: "3px solid transparent",
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  } as React.CSSProperties,
+  loadingText: {
+    color: "#8a9bb0",
+    fontSize: "14px",
+    fontFamily: "'Inter', sans-serif",
+  },
+  alertContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+    marginTop: "16px",
+  },
+  errorAlert: {
+    backgroundColor: "rgba(239, 68, 68, 0.2)",
+    color: "#F87171",
+    padding: "12px",
+    borderRadius: "6px",
+    fontSize: "14px",
+    textAlign: "center",
+    border: "1px solid rgba(239, 68, 68, 0.4)",
+    wordBreak: "break-word",
+    width: "100%",
+    maxWidth: "500px",
+  },
   searchSection: {
     display: "flex",
     flexDirection: "column",
@@ -240,13 +380,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   searchTitle: {
     color: "#ffffff",
     fontSize: "26px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
   },
   searchSubtitle: {
     color: "#8a9bb0",
     fontSize: "14px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     textAlign: "center",
     maxWidth: "480px",
@@ -270,7 +410,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "16px 20px",
     color: "#ffffff",
     fontSize: "15px",
-    fontWeight: "500", // Inter Bold
+    fontWeight: "500",
     fontFamily: "'Inter', sans-serif",
     outline: "none",
   },
@@ -280,7 +420,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "none",
     padding: "0 30px",
     fontSize: "15px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
     transition: "background-color 0.2s",
@@ -288,7 +428,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   searchHelper: {
     color: "#5a7080",
     fontSize: "12px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     textAlign: "center",
     marginTop: "10px",
@@ -305,7 +445,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "8px 18px",
     borderRadius: "6px",
     fontSize: "13px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
   },
@@ -316,7 +456,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "8px 18px",
     borderRadius: "6px",
     fontSize: "13px",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
   },
