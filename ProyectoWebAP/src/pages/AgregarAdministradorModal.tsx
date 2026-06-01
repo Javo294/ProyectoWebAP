@@ -1,0 +1,153 @@
+import React, { useState } from "react";
+import ModalOverlay from "../components/ModalOverlay";
+import InfoBanner from "../components/InfoBanner";
+import InputField from "../components/InputField";
+import PrimaryButton from "../components/PrimaryButton";
+import { administradoresService } from "../lib/sistratec";
+import { ApiError } from "../lib/api";
+
+interface AgregarAdministradorModalProps {
+  onCreado: () => void;
+  onCancel: () => void;
+}
+
+const InfoIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="16" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12.01" y2="8" />
+  </svg>
+);
+
+const ErrorIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b8860b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="12" y1="8" x2="12" y2="12" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
+const AgregarAdministradorModal: React.FC<AgregarAdministradorModalProps> = ({ onCreado, onCancel }) => {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const formularioValido =
+    fullName.trim().length >= 2 && /\S+@\S+\.\S+/.test(email) && address.trim().length >= 5 && password.length >= 8;
+
+  const crear = async () => {
+    setError(null);
+    setEnviando(true);
+    try {
+      await administradoresService.crear({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        address: address.trim(),
+        password,
+      });
+      onCreado();
+    } catch (err) {
+      if (err instanceof ApiError) setError(err.message);
+      else setError("No pudimos crear la cuenta. Tus datos están a salvo, intenta de nuevo.");
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onCancel}>
+      <div style={styles.header}>
+        <h2 style={styles.title}>Agregar administrador</h2>
+        <button style={styles.closeBtn} onClick={onCancel} aria-label="Cerrar">
+          ×
+        </button>
+      </div>
+
+      <InfoBanner
+        variant="info"
+        icon={<InfoIcon />}
+        title="¿Qué podrá hacer este administrador?"
+        description="Tendrá acceso a la gestión de donaciones, transportistas y usuarios de tu mismo centro de acopio. La contraseña es temporal: podrá cambiarla desde su perfil."
+      />
+
+      <div style={styles.form}>
+        <InputField
+          label="Nombre completo"
+          placeholder="Ej: Ana Mora Jiménez"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          helperText="Como aparece en la cédula."
+        />
+        <InputField
+          label="Correo electrónico"
+          type="email"
+          placeholder="ana.mora@correo.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          helperText="Será su usuario para iniciar sesión."
+        />
+        <InputField
+          label="Dirección exacta"
+          placeholder="Provincia, cantón, distrito y señas"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          helperText="Dato de contacto de la persona."
+        />
+        <InputField
+          label="Contraseña temporal"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          showToggle
+          helperText="Mínimo 8 caracteres, con al menos una mayúscula y un número."
+        />
+      </div>
+
+      {error && <InfoBanner variant="warning" icon={<ErrorIcon />} title="No pudimos crear la cuenta" description={error} />}
+
+      <div style={styles.actions}>
+        <button style={styles.cancelBtn} onClick={onCancel} disabled={enviando}>
+          Cancelar
+        </button>
+        <div style={styles.confirmWrap}>
+          <PrimaryButton
+            label={enviando ? "Creando cuenta..." : "Crear cuenta"}
+            onClick={crear}
+            disabled={!formularioValido || enviando}
+          />
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  title: { color: "#ffffff", fontSize: "20px", fontWeight: "700", fontFamily: "'Inter', sans-serif", margin: 0 },
+  closeBtn: {
+    background: "none",
+    border: "none",
+    color: "#8a9bb0",
+    fontSize: "22px",
+    cursor: "pointer",
+    lineHeight: 1,
+  },
+  form: { display: "flex", flexDirection: "column", gap: "16px" },
+  actions: { display: "flex", gap: "14px", alignItems: "center" },
+  cancelBtn: {
+    flex: "0 0 auto",
+    padding: "14px 24px",
+    backgroundColor: "transparent",
+    color: "#cdd6e0",
+    border: "1px solid #2e3f50",
+    borderRadius: "6px",
+    fontSize: "15px",
+    fontWeight: "600",
+    fontFamily: "'Inter', sans-serif",
+    cursor: "pointer",
+  },
+  confirmWrap: { flex: 1 },
+};
+
+export default AgregarAdministradorModal;
