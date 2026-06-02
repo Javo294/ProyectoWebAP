@@ -9,6 +9,7 @@ import AsignarTransportistaModal from "./AsignarTransportistaModal";
 import AgregarTransportistaModal from "./AgregarTransportistaModal";
 import AgregarAdministradorModal from "./AgregarAdministradorModal";
 import DetalleDonacionModal from "./DetalleDonacionModal";
+import CambioEstadoModal from "./CambioEstadoModal";
 import {
   dashboardService,
   donacionesService,
@@ -19,7 +20,7 @@ import {
   type MetricasAdmin,
 } from "../lib/sistratec";
 import { getCurrentUser } from "../lib/session";
-import { ApiError } from "../lib/api";
+import { ApiError, api } from "../lib/api";
 
 const variantePorEstado: Record<EstadoDonacion, "recibido" | "clasificado" | "en_transito" | "entregado"> = {
   recibido: "recibido",
@@ -78,12 +79,19 @@ const CheckIcon = () => (
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
+const MapPinIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
 
 const ITEMS_NAV: ItemNav[] = [
   { clave: "resumen", etiqueta: "Resumen", icono: <GridIcon /> },
   { clave: "donaciones", etiqueta: "Donaciones", icono: <BoxIcon /> },
   { clave: "transportistas", etiqueta: "Transportistas", icono: <TruckIcon /> },
   { clave: "admins", etiqueta: "Administradores", icono: <UsersIcon /> },
+  { clave: "seguimiento", etiqueta: "Seguimiento transp.", icono: <MapPinIcon /> },
   { clave: "perfil", etiqueta: "Mi perfil", icono: <UserIcon /> },
 ];
 
@@ -112,10 +120,19 @@ const AdminDashboard: React.FC = () => {
 
   const [detalle, setDetalle] = useState<DonacionAdmin | null>(null);
   const [asignando, setAsignando] = useState<DonacionAdmin | null>(null);
+  const [cambiandoEstado, setCambiandoEstado] = useState<DonacionAdmin | null>(null);
   const [modalAgregarTransportista, setModalAgregarTransportista] = useState(false);
   const [modalAgregarAdmin, setModalAgregarAdmin] = useState(false);
   const [senalTransportistas, setSenalTransportistas] = useState(0);
   const [senalAdmins, setSenalAdmins] = useState(0);
+
+  const manejarSeleccion = (clave: string) => {
+    if (clave === "seguimiento") {
+      window.location.hash = "#/admin/seguimiento";
+      return;
+    }
+    setSeccion(clave);
+  };
 
   const cargarMetricas = useCallback(async () => {
     setErrorMetricas(null);
@@ -161,6 +178,13 @@ const AdminDashboard: React.FC = () => {
     cargarMetricas();
   };
 
+  const handleCambioEstado = async (nuevoEstado: EstadoDonacion) => {
+    if (!cambiandoEstado) return;
+    await api.patch(`/donations/${cambiandoEstado.id}/state`, { estado: nuevoEstado });
+    setCambiandoEstado(null);
+    await Promise.all([cargarDonaciones(), cargarMetricas()]);
+  };
+
   const distribucion = metricas?.distribucion ?? [];
   const datosGrafico = [
     { estado: "Recibido", valor: distribucion.find((d) => d.estado === "Recibido")?.valor ?? 0, color: "#0e7c66" },
@@ -173,7 +197,7 @@ const AdminDashboard: React.FC = () => {
       usuario={usuario}
       items={ITEMS_NAV}
       activo={seccion}
-      onSeleccionar={setSeccion}
+      onSeleccionar={manejarSeleccion}
       titulo="Panel de administración"
       subtitulo="Gestiona donaciones, transportistas y el equipo de tu centro de acopio."
     >
@@ -270,6 +294,11 @@ const AdminDashboard: React.FC = () => {
                               Asignar
                             </button>
                           )}
+                          {d.estado !== "entregado" && d.estado !== "recibido" && (
+                            <button style={styles.cambioBtn} onClick={() => setCambiandoEstado(d)}>
+                              Cambiar estado
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -353,6 +382,15 @@ const AdminDashboard: React.FC = () => {
             setSenalAdmins((s) => s + 1);
           }}
           onCancel={() => setModalAgregarAdmin(false)}
+        />
+      )}
+
+      {cambiandoEstado && (
+        <CambioEstadoModal
+          trackingId={cambiandoEstado.trackingId}
+          estadoActual={cambiandoEstado.estado}
+          onConfirm={handleCambioEstado}
+          onCancel={() => setCambiandoEstado(null)}
         />
       )}
     </DashboardLayout>
@@ -474,6 +512,17 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: "rgba(0,212,245,0.10)",
     color: "#00d4f5",
     border: "1px solid #00d4f5",
+    borderRadius: "6px",
+    fontSize: "12px",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
+    cursor: "pointer",
+  },
+  cambioBtn: {
+    padding: "7px 14px",
+    backgroundColor: "rgba(184,134,11,0.12)",
+    color: "#f0d488",
+    border: "1px solid #b8860b",
     borderRadius: "6px",
     fontSize: "12px",
     fontWeight: "700",

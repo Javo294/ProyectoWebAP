@@ -150,8 +150,8 @@ const Trazabilidad: React.FC = () => {
         subtitle="Trazabilidad de donaciones en tiempo real"
         rightContent={
           <div style={styles.headerActions}>
-            <button style={styles.outlineBtn}>Iniciar sesión</button>
-            <button style={styles.primaryBtn}>Registrarme</button>
+            <button style={styles.outlineBtn} onClick={() => window.location.hash = "#/login"}>Iniciar sesión</button>
+            <button style={styles.primaryBtn} onClick={() => window.location.hash = "#/register"}>Registrarme</button>
           </div>
         }
       />
@@ -162,7 +162,7 @@ const Trazabilidad: React.FC = () => {
           <section style={styles.section}>
             <Breadcrumb
               items={[
-                { label: "Inicio", onClick: () => console.log("Ir a inicio") },
+                { label: "Inicio", onClick: () => window.location.hash = "#/" },
                 { label: "Rastrear donación" },
               ]}
             />
