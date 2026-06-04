@@ -47,8 +47,8 @@ const MarcarEnTransitoModal: React.FC<MarcarEnTransitoModalProps> = ({
       />
 
       <p style={styles.texto}>
-        El estado pasará de &quot;Clasificado&quot; a &quot;En tránsito&quot; y el donante podrá ver el cambio en la
-        trazabilidad. Si aún no has iniciado la ruta, puedes cancelar y hacerlo después.
+        El estado pasará a &quot;En tránsito&quot; y el donante podrá ver el cambio en la trazabilidad.
+        Si aún no has iniciado la ruta, puedes cancelar y hacerlo después.
       </p>
 
       <div style={styles.actions}>

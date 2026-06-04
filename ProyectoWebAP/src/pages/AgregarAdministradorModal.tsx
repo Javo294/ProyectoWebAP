@@ -30,13 +30,20 @@ const ErrorIcon = () => (
 const AgregarAdministradorModal: React.FC<AgregarAdministradorModalProps> = ({ onCreado, onCancel }) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const passwordCumpleReglas = /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+
   const formularioValido =
-    fullName.trim().length >= 2 && /\S+@\S+\.\S+/.test(email) && address.trim().length >= 5 && password.length >= 8;
+    fullName.trim().length >= 2 &&
+    /\S+@\S+\.\S+/.test(email) &&
+    /^\d{8}$/.test(phone) &&
+    address.trim().length >= 5 &&
+    passwordCumpleReglas;
 
   const crear = async () => {
     setError(null);
@@ -45,12 +52,13 @@ const AgregarAdministradorModal: React.FC<AgregarAdministradorModalProps> = ({ o
       await administradoresService.crear({
         fullName: fullName.trim(),
         email: email.trim(),
+        phone: phone.trim(),
         address: address.trim(),
         password,
       });
       onCreado();
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
+      if (err instanceof ApiError) setError(err.primerMensajeDeValidacion() ?? err.message);
       else setError("No pudimos crear la cuenta. Tus datos están a salvo, intenta de nuevo.");
       setEnviando(false);
     }
@@ -87,6 +95,14 @@ const AgregarAdministradorModal: React.FC<AgregarAdministradorModalProps> = ({ o
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           helperText="Será su usuario para iniciar sesión."
+        />
+        <InputField
+          label="Teléfono"
+          type="tel"
+          placeholder="88881234"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+          helperText="8 dígitos sin espacios ni guiones."
         />
         <InputField
           label="Dirección exacta"

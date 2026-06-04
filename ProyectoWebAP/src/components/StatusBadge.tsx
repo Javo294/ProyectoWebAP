@@ -6,7 +6,6 @@ type BadgeVariant =
   | "pendiente"
   | "transito"
   | "recibido"
-  | "clasificado"
   | "en_transito";
 
 interface StatusBadgeProps {
@@ -20,7 +19,6 @@ const variantStyles: Record<BadgeVariant, React.CSSProperties> = {
   pendiente: { backgroundColor: "#2e3f50", color: "#8a9bb0" },
   transito: { backgroundColor: "#1e3a5f", color: "#00d4f5" },
   recibido: { backgroundColor: "#0e7c66", color: "#ffffff" },
-  clasificado: { backgroundColor: "#1e3a5f", color: "#00d4f5" },
   en_transito: { backgroundColor: "#b9770e", color: "#ffffff" },
 };
 
@@ -30,7 +28,6 @@ const defaultLabels: Record<BadgeVariant, string> = {
   pendiente: "Pendiente",
   transito: "En tránsito",
   recibido: "Recibido",
-  clasificado: "Clasificado",
   en_transito: "En tránsito",
 };
 

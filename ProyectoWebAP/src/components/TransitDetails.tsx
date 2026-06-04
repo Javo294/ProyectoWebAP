@@ -1,47 +1,69 @@
 import React from "react";
 
-// 1. Definimos la interfaz con propiedades opcionales por seguridad contra datos nulos
 interface TransitDetailsProps {
-  date?: string;
+  estado: "en_transito" | "entregado";
+  fechaEstimada?: string;
+  fechaEntregada?: string;
   transportista?: string;
   vehiculo?: string;
+  origen?: string;
   destino?: string;
 }
 
-const TransitDetails: React.FC<TransitDetailsProps> = ({ 
-  date = "Pendiente", 
-  transportista = "Por asignar", 
-  vehiculo = "No especificado", 
-  destino = "Centro de distribución" 
+const TransitDetails: React.FC<TransitDetailsProps> = ({
+  estado,
+  fechaEstimada,
+  fechaEntregada,
+  transportista,
+  vehiculo,
+  origen,
+  destino,
 }) => {
+  const titulo =
+    estado === "entregado"
+      ? `Entregado el ${fechaEntregada || "fecha pendiente"}`
+      : "En tránsito hacia su destino";
+
+  const fechaEstimadaTexto = fechaEstimada || "Sin estimar";
+  const transportistaTexto = transportista || "Pendiente asignación";
+  const vehiculoTexto = vehiculo || "Pendiente";
+  const origenTexto = origen || "Centro de acopio";
+  const destinoTexto = destino || "Pendiente";
+
   return (
     <div style={styles.card}>
-      <p style={styles.title}>
-        En tránsito desde el <span style={styles.date}>{date}</span>
-      </p>
+      <p style={styles.title}>{titulo}</p>
       <div style={styles.fields}>
         <div style={styles.field}>
           <span style={styles.label}>Transportista</span>
-          <span style={styles.value}>{transportista}</span>
+          <span style={styles.value}>{transportistaTexto}</span>
         </div>
         <div style={styles.field}>
           <span style={styles.label}>Vehículo</span>
-          <span style={styles.value}>{vehiculo}</span>
+          <span style={styles.value}>{vehiculoTexto}</span>
+        </div>
+        <div style={styles.field}>
+          <span style={styles.label}>Origen</span>
+          <span style={styles.value}>{origenTexto}</span>
         </div>
         <div style={styles.field}>
           <span style={styles.label}>Destino</span>
-          <span style={styles.value}>{destino}</span>
+          <span style={styles.value}>{destinoTexto}</span>
         </div>
+        {estado === "en_transito" && (
+          <div style={styles.field}>
+            <span style={styles.label}>Entrega estimada</span>
+            <span style={styles.value}>{fechaEstimadaTexto}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// 2. Tipado de objeto CSS estándar unificado con el resto del front
 const styles: { [key: string]: React.CSSProperties } = {
   card: {
     border: "1px solid #666666",
-    background: "#171920",
     borderRadius: "8px",
     padding: "20px 24px",
     display: "flex",
@@ -55,24 +77,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: 0,
     color: "#00D4FF",
     fontSize: "21px",
-    fontWeight: "700", // Inter Bold
-    fontFamily: "'Inter', sans-serif",
-  },
-  date: {
-    color: "#00d4f5",
-    fontWeight: "700", // Inter Bold
+    fontWeight: "700",
     fontFamily: "'Inter', sans-serif",
   },
   fields: {
     display: "flex",
     gap: "40px",
-    flexWrap: "wrap", // Simplificado sin requerir el 'as const'
+    flexWrap: "wrap",
   },
   field: {
     display: "flex",
     flexDirection: "column",
     gap: "4px",
-    flex: "1 1 auto", // Comportamiento responsivo fluido para pantallas chicas
+    flex: "1 1 auto",
+    minWidth: 140,
   },
   label: {
     color: "#5a7080",

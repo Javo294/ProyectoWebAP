@@ -9,7 +9,6 @@ import AsignarTransportistaModal from "./AsignarTransportistaModal";
 import AgregarTransportistaModal from "./AgregarTransportistaModal";
 import AgregarAdministradorModal from "./AgregarAdministradorModal";
 import DetalleDonacionModal from "./DetalleDonacionModal";
-import CambioEstadoModal from "./CambioEstadoModal";
 import {
   dashboardService,
   donacionesService,
@@ -20,18 +19,16 @@ import {
   type MetricasAdmin,
 } from "../lib/sistratec";
 import { getCurrentUser } from "../lib/session";
-import { ApiError, api } from "../lib/api";
+import { ApiError } from "../lib/api";
 
-const variantePorEstado: Record<EstadoDonacion, "recibido" | "clasificado" | "en_transito" | "entregado"> = {
+const variantePorEstado: Record<EstadoDonacion, "recibido" | "en_transito" | "entregado"> = {
   recibido: "recibido",
-  clasificado: "clasificado",
   en_transito: "en_transito",
   entregado: "entregado",
 };
 
 const variantePorEstadoModal: Record<EstadoDonacion, "entregado" | "activo" | "pendiente" | "transito"> = {
   recibido: "pendiente",
-  clasificado: "activo",
   en_transito: "transito",
   entregado: "entregado",
 };
@@ -79,26 +76,16 @@ const CheckIcon = () => (
     <polyline points="22 4 12 14.01 9 11.01" />
   </svg>
 );
-const MapPinIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-    <circle cx="12" cy="10" r="3" />
-  </svg>
-);
-
 const ITEMS_NAV: ItemNav[] = [
-  { clave: "resumen", etiqueta: "Resumen", icono: <GridIcon /> },
+  { clave: "resumen", etiqueta: "Dashboard", icono: <GridIcon /> },
   { clave: "donaciones", etiqueta: "Donaciones", icono: <BoxIcon /> },
-  { clave: "transportistas", etiqueta: "Transportistas", icono: <TruckIcon /> },
-  { clave: "admins", etiqueta: "Administradores", icono: <UsersIcon /> },
-  { clave: "seguimiento", etiqueta: "Seguimiento transp.", icono: <MapPinIcon /> },
+  { clave: "usuarios", etiqueta: "Usuarios", icono: <UsersIcon /> },
   { clave: "perfil", etiqueta: "Mi perfil", icono: <UserIcon /> },
 ];
 
 const ESTADOS_FILTRO: { valor: EstadoDonacion | ""; etiqueta: string }[] = [
   { valor: "", etiqueta: "Todos" },
   { valor: "recibido", etiqueta: "Recibido" },
-  { valor: "clasificado", etiqueta: "Clasificado" },
   { valor: "en_transito", etiqueta: "En tránsito" },
   { valor: "entregado", etiqueta: "Entregado" },
 ];
@@ -120,19 +107,10 @@ const AdminDashboard: React.FC = () => {
 
   const [detalle, setDetalle] = useState<DonacionAdmin | null>(null);
   const [asignando, setAsignando] = useState<DonacionAdmin | null>(null);
-  const [cambiandoEstado, setCambiandoEstado] = useState<DonacionAdmin | null>(null);
   const [modalAgregarTransportista, setModalAgregarTransportista] = useState(false);
   const [modalAgregarAdmin, setModalAgregarAdmin] = useState(false);
   const [senalTransportistas, setSenalTransportistas] = useState(0);
   const [senalAdmins, setSenalAdmins] = useState(0);
-
-  const manejarSeleccion = (clave: string) => {
-    if (clave === "seguimiento") {
-      window.location.hash = "#/admin/seguimiento";
-      return;
-    }
-    setSeccion(clave);
-  };
 
   const cargarMetricas = useCallback(async () => {
     setErrorMetricas(null);
@@ -178,13 +156,6 @@ const AdminDashboard: React.FC = () => {
     cargarMetricas();
   };
 
-  const handleCambioEstado = async (nuevoEstado: EstadoDonacion) => {
-    if (!cambiandoEstado) return;
-    await api.patch(`/donations/${cambiandoEstado.id}/state`, { estado: nuevoEstado });
-    setCambiandoEstado(null);
-    await Promise.all([cargarDonaciones(), cargarMetricas()]);
-  };
-
   const distribucion = metricas?.distribucion ?? [];
   const datosGrafico = [
     { estado: "Recibido", valor: distribucion.find((d) => d.estado === "Recibido")?.valor ?? 0, color: "#0e7c66" },
@@ -197,9 +168,19 @@ const AdminDashboard: React.FC = () => {
       usuario={usuario}
       items={ITEMS_NAV}
       activo={seccion}
-      onSeleccionar={manejarSeleccion}
-      titulo="Panel de administración"
-      subtitulo="Gestiona donaciones, transportistas y el equipo de tu centro de acopio."
+      onSeleccionar={setSeccion}
+      titulo={
+        seccion === "perfil" ? "Mi perfil"
+        : seccion === "donaciones" ? "Gestión de Donaciones"
+        : seccion === "usuarios" ? "Gestión de Usuarios"
+        : "Panel de Control"
+      }
+      subtitulo={
+        seccion === "perfil" ? "Actualiza tus datos personales y contraseña."
+        : seccion === "donaciones" ? "Busca, filtra y asigna transportistas a las donaciones de tu centro."
+        : seccion === "usuarios" ? "Administra los usuarios con acceso al sistema."
+        : new Date().toLocaleDateString("es-CR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      }
     >
       {seccion === "resumen" && (
         <>
@@ -286,17 +267,12 @@ const AdminDashboard: React.FC = () => {
                       </td>
                       <td style={styles.td}>
                         <div style={styles.acciones}>
-                          <button style={styles.linkBtn} onClick={() => setDetalle(d)}>
+                          <button style={styles.verBtn} onClick={() => setDetalle(d)}>
                             Ver detalle
                           </button>
                           {d.estado === "recibido" && (
                             <button style={styles.asignarBtn} onClick={() => setAsignando(d)}>
                               Asignar
-                            </button>
-                          )}
-                          {d.estado !== "entregado" && d.estado !== "recibido" && (
-                            <button style={styles.cambioBtn} onClick={() => setCambiandoEstado(d)}>
-                              Cambiar estado
                             </button>
                           )}
                         </div>
@@ -324,30 +300,34 @@ const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {seccion === "transportistas" && (
-        <GestorCuentas
-          titulo="Transportistas"
-          descripcion="Personas encargadas de trasladar las donaciones de tu centro."
-          servicio={transportistasService}
-          etiquetaAgregar="Agregar transportista"
-          onAgregar={() => setModalAgregarTransportista(true)}
-          refrescarSenal={senalTransportistas}
-          mostrarVehiculo
-        />
+      {seccion === "usuarios" && (
+        <div style={styles.usuariosWrap}>
+          <div style={styles.usuariosBanner}>
+            Solo Admin puede crear cuentas de Admin y Transportistas
+          </div>
+          <div style={styles.usuariosGrid}>
+            <GestorCuentas
+              titulo="Administradores"
+              descripcion="Personas con acceso a la gestión del centro de acopio."
+              servicio={administradoresService}
+              etiquetaAgregar="Agregar Administrador"
+              onAgregar={() => setModalAgregarAdmin(true)}
+              refrescarSenal={senalAdmins}
+            />
+            <GestorCuentas
+              titulo="Transportistas"
+              descripcion="Personas encargadas de trasladar las donaciones de tu centro."
+              servicio={transportistasService}
+              etiquetaAgregar="Agregar Transportista"
+              onAgregar={() => setModalAgregarTransportista(true)}
+              refrescarSenal={senalTransportistas}
+              mostrarVehiculo
+            />
+          </div>
+        </div>
       )}
 
-      {seccion === "admins" && (
-        <GestorCuentas
-          titulo="Administradores"
-          descripcion="Personas con acceso a la gestión del centro de acopio."
-          servicio={administradoresService}
-          etiquetaAgregar="Agregar administrador"
-          onAgregar={() => setModalAgregarAdmin(true)}
-          refrescarSenal={senalAdmins}
-        />
-      )}
-
-      {seccion === "perfil" && <PanelPerfil />}
+      {seccion === "perfil" && <PanelPerfil mostrarCentro />}
 
       {detalle && (
         <DetalleDonacionModal
@@ -385,20 +365,34 @@ const AdminDashboard: React.FC = () => {
         />
       )}
 
-      {cambiandoEstado && (
-        <CambioEstadoModal
-          trackingId={cambiandoEstado.trackingId}
-          estadoActual={cambiandoEstado.estado}
-          onConfirm={handleCambioEstado}
-          onCancel={() => setCambiandoEstado(null)}
-        />
-      )}
     </DashboardLayout>
   );
 };
 
 const styles: Record<string, React.CSSProperties> = {
   cards: { display: "flex", gap: "16px", flexWrap: "wrap" },
+  usuariosWrap: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+  },
+  usuariosBanner: {
+    alignSelf: "flex-end",
+    backgroundColor: "rgba(0,212,245,0.06)",
+    border: "1px solid rgba(0,212,245,0.3)",
+    color: "#7ce6ff",
+    fontSize: "12px",
+    fontWeight: 600,
+    fontFamily: "'Inter', sans-serif",
+    padding: "8px 14px",
+    borderRadius: "999px",
+  },
+  usuariosGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(440px, 1fr))",
+    gap: "20px",
+    alignItems: "start",
+  },
   graficos: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -473,11 +467,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderColor: "#00d4f5",
   },
   errorBox: {
-    backgroundColor: "rgba(184,134,11,0.10)",
-    border: "1px solid #b8860b",
+    backgroundColor: "rgba(239,68,68,0.10)",
+    border: "1px solid rgba(239,68,68,0.4)",
     borderRadius: "10px",
     padding: "12px 16px",
-    color: "#f0d488",
+    color: "#F87171",
     fontSize: "13px",
     fontFamily: "'Inter', sans-serif",
     marginBottom: "14px",
@@ -497,17 +491,7 @@ const styles: Record<string, React.CSSProperties> = {
   td: { color: "#cdd6e0", fontSize: "13px", padding: "14px 12px", verticalAlign: "middle" },
   codigo: { color: "#00d4f5", fontWeight: "700" },
   acciones: { display: "flex", gap: "14px", alignItems: "center" },
-  linkBtn: {
-    background: "none",
-    border: "none",
-    color: "#8a9bb0",
-    fontSize: "13px",
-    fontWeight: "600",
-    fontFamily: "'Inter', sans-serif",
-    cursor: "pointer",
-    padding: 0,
-  },
-  asignarBtn: {
+  verBtn: {
     padding: "7px 14px",
     backgroundColor: "rgba(0,212,245,0.10)",
     color: "#00d4f5",
@@ -518,11 +502,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
   },
-  cambioBtn: {
+  asignarBtn: {
     padding: "7px 14px",
-    backgroundColor: "rgba(184,134,11,0.12)",
-    color: "#f0d488",
-    border: "1px solid #b8860b",
+    backgroundColor: "rgba(0,212,245,0.10)",
+    color: "#00d4f5",
+    border: "1px solid #00d4f5",
     borderRadius: "6px",
     fontSize: "12px",
     fontWeight: "700",

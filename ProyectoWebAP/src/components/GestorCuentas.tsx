@@ -97,7 +97,7 @@ const GestorCuentas: React.FC<GestorCuentasProps> = ({
                 <tr key={c.id} style={styles.tr}>
                   <td style={styles.td}>{c.fullName}</td>
                   <td style={styles.td}>{c.email}</td>
-                  {mostrarVehiculo && <td style={styles.td}>{c.vehicle || "—"}</td>}
+                  {mostrarVehiculo && <td style={styles.td}>{c.vehicle || "Sin asignar"}</td>}
                   <td style={styles.td}>
                     <span style={{ ...styles.estado, ...(c.isActive ? styles.estadoActivo : styles.estadoInactivo) }}>
                       {c.isActive ? "Activo" : "Inactivo"}

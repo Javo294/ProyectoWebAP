@@ -5,6 +5,7 @@ import DonationInfoCard from "../components/DonationInfoCard";
 import DonationTimeline from "../components/DonationTimeline";
 import DonationNotFound from "../components/DonationNotFound";
 import TransitDetails from "../components/TransitDetails";
+import { apiRequest, ApiError } from "../lib/api";
 
 type StepStatus = "completed" | "active" | "pending";
 
@@ -20,10 +21,13 @@ interface DonationData {
   tipo: string;
   centro: string;
   fechaRegistro: string;
+  estado: "recibido" | "en_transito" | "entregado";
   transit: {
-    date: string;
+    fechaEstimada: string;
+    fechaEntregada: string;
     transportista: string;
     vehiculo: string;
+    origen: string;
     destino: string;
   };
   steps: TimelineStep[];
@@ -40,40 +44,47 @@ const Trazabilidad: React.FC = () => {
 
   // Mapear respuesta del backend a formato del componente
   const mapearDonacionAlUI = (data: any): DonationData => {
-    const estados = ["recibido", "clasificado", "en_transito", "entregado"];
-    const estadoActual = data.estado;
-    const indiceEstadoActual = estados.indexOf(estadoActual);
+    const estadosUI = [
+      { clave: "recibido", label: "Recibido" },
+      { clave: "en_transito", label: "En tránsito" },
+      { clave: "entregado", label: "Entregado" },
+    ];
 
-    // Generar steps de la timeline basado en eventos reales
-    const steps: TimelineStep[] = estados.map((estado, index) => {
-      const evento = data.eventos.find((e: any) => e.estado === estado);
-      
-      // Reemplazamos el guion bajo por un espacio en blanco
-      const estadoLimpio = estado.replace("_", " ");
+    const estadoActual = data.status ?? data.estado ?? "recibido";
+    const indiceEstadoActual = estadosUI.findIndex((e) => e.clave === estadoActual);
 
-      return {
-        label: estadoLimpio.charAt(0).toUpperCase() + estadoLimpio.slice(1),
-        date: evento ? new Date(evento.fecha).toLocaleString("es-CR") : undefined,
-        status:
-          index < indiceEstadoActual
-            ? "completed"
-            : index === indiceEstadoActual
-              ? "active"
-              : "pending",
-      };
-    });
+    const steps: TimelineStep[] = estadosUI.map((estado, index) => ({
+      label: estado.label,
+      date: undefined,
+      status:
+        index < indiceEstadoActual
+          ? "completed"
+          : index === indiceEstadoActual
+            ? "active"
+            : "pending",
+    }));
+
+    const formatearFecha = (raw: unknown): string => {
+      if (!raw || typeof raw !== "string") return "";
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleDateString("es-CR");
+    };
 
     return {
-      codigo: data.codigo,
-      donante: "Donante (Anónimo)",
-      tipo: data.descripcion,
-      centro: "Centro de acopio",
-      fechaRegistro: new Date(data.fechaRegistro).toLocaleDateString("es-CR"),
+      codigo: data.trackingId ?? data.codigo ?? "",
+      donante: data.donorName ?? "Donante",
+      tipo: data.donationTypeName ?? data.descripcion ?? "",
+      centro: data.collectionCenterName ?? "Centro de acopio",
+      fechaRegistro: formatearFecha(data.createdAt) || (data.fechaRegistro ?? ""),
+      estado: estadoActual as DonationData["estado"],
       transit: {
-        date: data.fechaEstimadaEntrega,
-        transportista: "Pendiente asignación",
-        vehiculo: "Pendiente",
-        destino: "Pendiente",
+        fechaEstimada: formatearFecha(data.estimatedDeliveryDate),
+        fechaEntregada: formatearFecha(data.deliveredAt),
+        transportista: data.transporterName ?? "Pendiente asignación",
+        vehiculo: data.vehicleDescription ?? "Pendiente",
+        origen: data.collectionCenterName ?? "Centro de acopio",
+        destino: data.destination ?? "Pendiente",
       },
       steps,
     };
@@ -91,39 +102,17 @@ const Trazabilidad: React.FC = () => {
     setErrorMessage("");
 
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/v1/donations/track/${searchCode.toUpperCase().trim()}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      // SI DA ERROR 404 -> MOSTRAR AUTOMÁTICAMENTE EL COMPONENTE DONATION NOT FOUND
-      if (response.status === 404) {
+      const datos = await apiRequest<any>(`/donations/track/${searchCode.toUpperCase().trim()}`);
+      const mappedDonation = mapearDonacionAlUI(datos);
+      setDonation(mappedDonation);
+      setViewState("result");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
         setDonation(null);
         setViewState("notFound");
         return;
       }
-
-      if (!response.ok) {
-        console.error("Error del servidor:", data);
-        if (data.error && data.error.mensaje) {
-          throw new Error(data.mensaje || "Error al consultar la donación");
-        }
-        throw new Error(data.mensaje || "Error desconocido del servidor");
-      }
-
-      // Mapear datos y mostrar resultado exitoso
-      const mappedDonation = mapearDonacionAlUI(data.datos);
-      setDonation(mappedDonation);
-      setViewState("result");
-    } catch (err: any) {
-      setErrorMessage(err.message || "No se pudo conectar con el servidor");
+      setErrorMessage(err instanceof ApiError ? err.message : "No se pudo conectar con el servidor");
       setViewState("error");
     } finally {
       setIsLoading(false);
@@ -148,6 +137,7 @@ const Trazabilidad: React.FC = () => {
       <AppHeader
         title="SISTRA-TEC"
         subtitle="Trazabilidad de donaciones en tiempo real"
+        showBack
         rightContent={
           <div style={styles.headerActions}>
             <button style={styles.outlineBtn} onClick={() => window.location.hash = "#/login"}>Iniciar sesión</button>
@@ -182,12 +172,17 @@ const Trazabilidad: React.FC = () => {
                 fechaRegistro={donation.fechaRegistro}
               />
               <DonationTimeline steps={donation.steps} />
-              <TransitDetails
-                date={donation.transit.date}
-                transportista={donation.transit.transportista}
-                vehiculo={donation.transit.vehiculo}
-                destino={donation.transit.destino}
-              />
+              {(donation.estado === "en_transito" || donation.estado === "entregado") && (
+                <TransitDetails
+                  estado={donation.estado}
+                  fechaEstimada={donation.transit.fechaEstimada}
+                  fechaEntregada={donation.transit.fechaEntregada}
+                  transportista={donation.transit.transportista}
+                  vehiculo={donation.transit.vehiculo}
+                  origen={donation.transit.origen}
+                  destino={donation.transit.destino}
+                />
+              )}
             </div>
           </section>
         )}
@@ -292,6 +287,44 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     gap: "20px",
+  },
+  banner: {
+    backgroundColor: "rgba(0,212,245,0.06)",
+    border: "1px solid rgba(0,212,245,0.25)",
+    borderRadius: "10px",
+    padding: "14px 18px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  bannerLine: {
+    color: "#8a9bb0",
+    fontSize: "12px",
+    fontFamily: "'Inter', sans-serif",
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  bannerDot: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    backgroundColor: "#00d4f5",
+    flexShrink: 0,
+  },
+  bannerDotCyan: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    backgroundColor: "#0096C7",
+    flexShrink: 0,
+  },
+  bannerDotGreen: {
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    backgroundColor: "#16a34a",
+    flexShrink: 0,
   },
   codeHeader: {
     display: "flex",

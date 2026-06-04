@@ -2,11 +2,11 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
 import Trazabilidad from "./pages/Trazabilidad";
 import AdminDashboard from "./pages/AdminDashboard";
 import TransportistaDashboard from "./pages/TransportistaDashboard";
 import DonanteDashboard from "./pages/DonanteDashboard";
-import SeguimientoTransportistaAdmin from "./pages/SeguimientoTransportistaAdmin";
 import { getCurrentUser } from "./lib/session";
 
 function ProtegerRuta({ children, rol }: { children: React.ReactNode; rol?: string }) {
@@ -23,6 +23,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/track" element={<Trazabilidad />} />
         <Route
           path="/admin"
@@ -45,14 +46,6 @@ function App() {
           element={
             <ProtegerRuta rol="donor">
               <DonanteDashboard />
-            </ProtegerRuta>
-          }
-        />
-        <Route
-          path="/admin/seguimiento"
-          element={
-            <ProtegerRuta rol="admin">
-              <SeguimientoTransportistaAdmin />
             </ProtegerRuta>
           }
         />

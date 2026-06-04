@@ -33,9 +33,9 @@ const Login: React.FC = () => {
         throw new Error(data.mensaje || "Credenciales inválidas.");
       }
 
-      setSession(data.token, data.usuario);
+      setSession(data.datos.accessToken, data.datos.usuario, data.datos.refreshToken);
 
-      const role = data.usuario.role;
+      const role = data.datos.usuario.role;
       if (role === "admin") window.location.hash = "#/admin";
       else if (role === "transporter") window.location.hash = "#/transportista";
       else if (role === "donor") window.location.hash = "#/donante";
@@ -51,7 +51,7 @@ const Login: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AppHeader />
+      <AppHeader showBack onBack={() => { window.location.hash = "#/"; }} />
       <main style={styles.main}>
         <AuthCard
           title="Iniciar sesión"
@@ -88,6 +88,10 @@ const Login: React.FC = () => {
             onClick={handleSubmit}
           />
 
+          <span style={styles.forgotLink} onClick={() => { window.location.hash = "#/forgot-password"; }}>
+            ¿Olvidaste tu contraseña?
+          </span>
+
           {errorMensaje && (
             <div style={styles.errorAlert}>{errorMensaje}</div>
           )}
@@ -112,6 +116,14 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     padding: "80px 24px 40px",
+  },
+  forgotLink: {
+    color: "#00d4f5",
+    fontSize: "13px",
+    fontWeight: 600,
+    fontFamily: "'Inter', sans-serif",
+    textAlign: "center",
+    cursor: "pointer",
   },
   errorAlert: {
     backgroundColor: "rgba(239, 68, 68, 0.2)",

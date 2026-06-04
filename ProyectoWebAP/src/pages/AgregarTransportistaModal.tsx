@@ -30,17 +30,21 @@ const ErrorIcon = () => (
 const AgregarTransportistaModal: React.FC<AgregarTransportistaModalProps> = ({ onCreado, onCancel }) => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [vehicle, setVehicle] = useState("");
   const [password, setPassword] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const passwordCumpleReglas = /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
+
   const formularioValido =
     fullName.trim().length >= 2 &&
     /\S+@\S+\.\S+/.test(email) &&
+    /^\d{8}$/.test(phone) &&
     address.trim().length >= 5 &&
-    password.length >= 8;
+    passwordCumpleReglas;
 
   const crear = async () => {
     setError(null);
@@ -49,6 +53,7 @@ const AgregarTransportistaModal: React.FC<AgregarTransportistaModalProps> = ({ o
       await transportistasService.crear({
         fullName: fullName.trim(),
         email: email.trim(),
+        phone: phone.trim(),
         address: address.trim(),
         password,
         vehicle: vehicle.trim() || undefined,
@@ -56,7 +61,7 @@ const AgregarTransportistaModal: React.FC<AgregarTransportistaModalProps> = ({ o
       onCreado();
     } catch (err) {
       if (err instanceof ApiError) {
-        setError(err.message);
+        setError(err.primerMensajeDeValidacion() ?? err.message);
       } else {
         setError("No pudimos crear la cuenta. Tus datos están a salvo, intenta de nuevo.");
       }
@@ -95,6 +100,14 @@ const AgregarTransportistaModal: React.FC<AgregarTransportistaModalProps> = ({ o
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           helperText="Será su usuario para iniciar sesión."
+        />
+        <InputField
+          label="Teléfono"
+          type="tel"
+          placeholder="88881234"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 8))}
+          helperText="8 dígitos sin espacios ni guiones."
         />
         <InputField
           label="Dirección exacta"

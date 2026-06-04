@@ -47,19 +47,84 @@ const Landing: React.FC = () => {
               <p style={styles.stepDesc}>La donación llega al centro de acopio y es registrada en el sistema.</p>
             </div>
             <div style={styles.stepCard}>
-              <div style={{ ...styles.stepIcon, borderColor: "#00d4f5", color: "#00d4f5" }}>2</div>
-              <h3 style={styles.stepTitle}>Clasificado</h3>
-              <p style={styles.stepDesc}>El personal clasifica y prepara los productos para su traslado.</p>
-            </div>
-            <div style={styles.stepCard}>
-              <div style={{ ...styles.stepIcon, borderColor: "#b9770e", color: "#b9770e" }}>3</div>
+              <div style={{ ...styles.stepIcon, borderColor: "#b9770e", color: "#b9770e" }}>2</div>
               <h3 style={styles.stepTitle}>En tránsito</h3>
               <p style={styles.stepDesc}>Un transportista lleva la donación hacia su destino final.</p>
             </div>
             <div style={styles.stepCard}>
-              <div style={{ ...styles.stepIcon, borderColor: "#16a34a", color: "#16a34a" }}>4</div>
+              <div style={{ ...styles.stepIcon, borderColor: "#16a34a", color: "#16a34a" }}>3</div>
               <h3 style={styles.stepTitle}>Entregado</h3>
               <p style={styles.stepDesc}>La donación llega al beneficiario y el ciclo se completa.</p>
+            </div>
+          </div>
+        </section>
+
+        <section style={styles.steps}>
+          <h2 style={styles.sectionTitle}>¿Cómo funciona SISTRA-TEC?</h2>
+          <div style={styles.howGrid}>
+            <div style={styles.howCard}>
+              <span style={styles.howNumber}>01</span>
+              <div style={styles.howIcon}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </div>
+              <h3 style={styles.howTitle}>Registrás tu donación</h3>
+              <p style={styles.howDesc}>
+                Llevás tus artículos al centro de acopio autorizado. El personal registra cada ítem en el sistema con foto y categoría.
+              </p>
+            </div>
+            <div style={styles.howCard}>
+              <span style={styles.howNumber}>02</span>
+              <div style={styles.howIcon}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </div>
+              <h3 style={styles.howTitle}>Recibís un código único</h3>
+              <p style={styles.howDesc}>
+                El sistema genera un código único (ej. DON-2026-A4F9) que podés guardar en tu teléfono o imprimir en el acto.
+              </p>
+            </div>
+            <div style={styles.howCard}>
+              <span style={styles.howNumber}>03</span>
+              <div style={styles.howIcon}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00d4f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <h3 style={styles.howTitle}>Seguís tu ayuda en tiempo real</h3>
+              <p style={styles.howDesc}>
+                Con tu código podés ver en qué etapa está tu donación: recibida, en tránsito o entregada al beneficiario.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section style={styles.steps}>
+          <h2 style={styles.sectionTitle}>Diseñado para la confianza pública.</h2>
+          <p style={styles.trustSubtitle}>
+            Cada donación queda registrada, verificada y auditable por cualquier ciudadano.
+          </p>
+          <div style={styles.trustGrid}>
+            <div style={styles.trustCard}>
+              <span style={styles.trustValue}>100%</span>
+              <span style={styles.trustLabel}>Transparente</span>
+              <p style={styles.trustDesc}>Cada movimiento queda registrado y es auditable</p>
+            </div>
+            <div style={styles.trustCard}>
+              <span style={styles.trustValue}>En Vivo</span>
+              <span style={styles.trustLabel}>Tiempo Real</span>
+              <p style={styles.trustDesc}>Actualizaciones automáticas en cada etapa de la cadena</p>
+            </div>
+            <div style={styles.trustCard}>
+              <span style={styles.trustValue}>3</span>
+              <span style={styles.trustLabel}>Roles de Control</span>
+              <p style={styles.trustDesc}>Donante, transportista y administrador con permisos diferenciados</p>
             </div>
           </div>
         </section>
@@ -76,7 +141,7 @@ const Landing: React.FC = () => {
       </main>
 
       <footer style={styles.footer}>
-        <span>SISTRA-TEC © 2026 — Trazabilidad de donaciones en tiempo real</span>
+        <span>SISTRA-TEC © 2026 · Trazabilidad de donaciones en tiempo real</span>
       </footer>
     </div>
   );
@@ -238,6 +303,98 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "'Inter', sans-serif",
     lineHeight: 1.5,
     margin: 0,
+  },
+  howGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "20px",
+  },
+  howCard: {
+    backgroundColor: "#1A1D23",
+    border: "1px solid #232830",
+    borderRadius: "14px",
+    padding: "28px 24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    position: "relative",
+  },
+  howNumber: {
+    color: "#00d4f5",
+    fontSize: "13px",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
+    letterSpacing: "0.05em",
+  },
+  howIcon: {
+    width: "44px",
+    height: "44px",
+    borderRadius: "10px",
+    backgroundColor: "rgba(0,212,245,0.10)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: "8px",
+  },
+  howTitle: {
+    color: "#ffffff",
+    fontSize: "17px",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
+    margin: "8px 0 0",
+  },
+  howDesc: {
+    color: "#8a9bb0",
+    fontSize: "13px",
+    fontFamily: "'Inter', sans-serif",
+    lineHeight: 1.6,
+    margin: 0,
+  },
+  trustSubtitle: {
+    color: "#8a9bb0",
+    fontSize: "14px",
+    fontFamily: "'Inter', sans-serif",
+    textAlign: "center",
+    margin: "-16px auto 0",
+    maxWidth: "520px",
+    lineHeight: 1.6,
+  },
+  trustGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "20px",
+  },
+  trustCard: {
+    backgroundColor: "#1A1D23",
+    border: "1px solid #232830",
+    borderRadius: "14px",
+    padding: "32px 24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    textAlign: "center",
+    alignItems: "center",
+  },
+  trustValue: {
+    color: "#00d4f5",
+    fontSize: "44px",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
+    lineHeight: 1,
+  },
+  trustLabel: {
+    color: "#ffffff",
+    fontSize: "15px",
+    fontWeight: "700",
+    fontFamily: "'Inter', sans-serif",
+    marginTop: "6px",
+  },
+  trustDesc: {
+    color: "#8a9bb0",
+    fontSize: "12px",
+    fontFamily: "'Inter', sans-serif",
+    lineHeight: 1.5,
+    margin: "8px 0 0",
   },
   cta: {
     backgroundColor: "#1A1D23",

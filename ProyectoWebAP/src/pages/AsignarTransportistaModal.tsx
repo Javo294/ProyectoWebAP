@@ -106,7 +106,7 @@ const AsignarTransportistaModal: React.FC<AsignarTransportistaModalProps> = ({ d
         variant="info"
         icon={<InfoIcon />}
         title="¿Qué sucede al asignar?"
-        description="La donación pasará de 'Recibido' a 'Clasificado' y quedará lista para que el transportista la marque en tránsito. Esta acción queda registrada en el historial de trazabilidad."
+        description="La donación quedará asignada al transportista y disponible para que la marque en tránsito. Esta acción queda registrada en el historial de trazabilidad."
       />
 
       <div style={styles.field}>
@@ -126,7 +126,7 @@ const AsignarTransportistaModal: React.FC<AsignarTransportistaModalProps> = ({ d
           {transportistas.map((t) => (
             <option key={t.id} value={t.id}>
               {t.fullName}
-              {t.vehicle ? ` — ${t.vehicle}` : ""}
+              {t.vehicle ? ` · ${t.vehicle}` : ""}
             </option>
           ))}
         </select>

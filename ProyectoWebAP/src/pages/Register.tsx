@@ -122,14 +122,14 @@ const Register: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <AppHeader />
+      <AppHeader showBack onBack={() => { window.location.hash = "#/"; }} />
       <main style={styles.main}>
         <AuthCard
           title="Crear cuenta"
           subtitle="Regístrate para poder hacer una donación"
           footerText="¿Ya tienes una cuenta?"
           footerLinkText="Inicia sesión aquí"
-          onClickFooterLink={() => console.log("Ir a login")}
+          onClickFooterLink={() => { window.location.hash = "#/login"; }}
         >
           <InputField
             label="Nombre completo"

@@ -39,6 +39,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const cerrarSesion = () => {
     clearSession();
     if (onCerrarSesion) onCerrarSesion();
+    window.location.hash = "#/login";
+    window.location.reload();
   };
 
   const iniciales = (usuario?.fullName || "U")
@@ -147,13 +149,14 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "11px 14px",
     borderRadius: "10px",
     border: "none",
-    background: "none",
+    backgroundColor: "transparent",
     color: "#8a9bb0",
     fontSize: "14px",
     fontFamily: "'Inter', sans-serif",
     cursor: "pointer",
     textAlign: "left",
     width: "100%",
+    outline: "none",
     transition: "background-color 0.15s, color 0.15s",
   },
   navItemActivo: {

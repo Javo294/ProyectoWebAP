@@ -4,6 +4,7 @@ import StatCard from "../components/StatCard";
 import StatusBadge from "../components/StatusBadge";
 import MarcarEnTransitoModal from "./MarcarEnTransitoModal";
 import ConfirmarEntregaModal from "./ConfirmarEntrega";
+import PanelPerfil from "./PanelPerfil";
 import {
   asignacionesService,
   dashboardService,
@@ -15,9 +16,8 @@ import {
 import { getCurrentUser } from "../lib/session";
 import { ApiError } from "../lib/api";
 
-const variantePorEstado: Record<EstadoDonacion, "recibido" | "clasificado" | "en_transito" | "entregado"> = {
+const variantePorEstado: Record<EstadoDonacion, "recibido" | "en_transito" | "entregado"> = {
   recibido: "recibido",
-  clasificado: "clasificado",
   en_transito: "en_transito",
   entregado: "entregado",
 };
@@ -47,12 +47,21 @@ const CheckIcon = () => (
   </svg>
 );
 
+const UserIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
 const ITEMS_NAV: ItemNav[] = [
   { clave: "asignaciones", etiqueta: "Mis asignaciones", icono: <PackageIcon /> },
+  { clave: "perfil", etiqueta: "Mi perfil", icono: <UserIcon /> },
 ];
 
 const TransportistaDashboard: React.FC = () => {
   const usuario = getCurrentUser();
+  const [seccion, setSeccion] = useState("asignaciones");
   const [asignaciones, setAsignaciones] = useState<AsignacionVista[]>([]);
   const [metricas, setMetricas] = useState<MetricasTransportista | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -86,8 +95,8 @@ const TransportistaDashboard: React.FC = () => {
     cargar();
   }, [cargar]);
 
-  const clasificadas = useMemo(
-    () => asignaciones.filter((a) => a.estado === "clasificado"),
+  const pendientesSalida = useMemo(
+    () => asignaciones.filter((a) => a.estado === "recibido"),
     [asignaciones]
   );
 
@@ -101,8 +110,8 @@ const TransportistaDashboard: React.FC = () => {
   };
 
   const alternarTodas = () => {
-    if (seleccion.size === clasificadas.length) setSeleccion(new Set());
-    else setSeleccion(new Set(clasificadas.map((a) => a.donationId)));
+    if (seleccion.size === pendientesSalida.length) setSeleccion(new Set());
+    else setSeleccion(new Set(pendientesSalida.map((a) => a.donationId)));
   };
 
   const confirmarTransito = async () => {
@@ -138,17 +147,21 @@ const TransportistaDashboard: React.FC = () => {
   };
 
   const idsSeleccionados = Array.from(seleccion);
-  const asignacionesSeleccionadas = clasificadas.filter((a) => seleccion.has(a.donationId));
+  const asignacionesSeleccionadas = pendientesSalida.filter((a) => seleccion.has(a.donationId));
 
   return (
     <DashboardLayout
       usuario={usuario}
       items={ITEMS_NAV}
-      activo="asignaciones"
-      onSeleccionar={() => undefined}
-      titulo={`Hola, ${usuario?.fullName?.split(" ")[0] || "transportista"}`}
-      subtitulo="Estas son las donaciones que tienes asignadas para transportar."
+      activo={seccion}
+      onSeleccionar={setSeccion}
+      titulo={seccion === "perfil" ? "Mi perfil" : `Hola, ${usuario?.fullName?.split(" ")[0] || "transportista"}`}
+      subtitulo={seccion === "perfil" ? "Actualiza tus datos personales y contraseña." : "Estas son las donaciones que tienes asignadas para transportar."}
     >
+      {seccion === "perfil" ? (
+        <PanelPerfil mostrarVehiculo />
+      ) : (
+      <>
       <div style={styles.cards}>
         <StatCard label="Pendientes de salida" value={metricas?.pendientes ?? 0} icon={<PackageIcon />} accent="#00d4f5" />
         <StatCard label="En tránsito" value={metricas?.enTransito ?? 0} icon={<TruckIcon />} accent="#b9770e" />
@@ -160,7 +173,7 @@ const TransportistaDashboard: React.FC = () => {
       <div style={styles.panel}>
         <div style={styles.panelHeader}>
           <h2 style={styles.panelTitle}>Mis asignaciones</h2>
-          {clasificadas.length > 0 && (
+          {pendientesSalida.length > 0 && (
             <button
               style={{ ...styles.bulkBtn, ...(idsSeleccionados.length === 0 ? styles.bulkBtnDisabled : {}) }}
               disabled={idsSeleccionados.length === 0}
@@ -183,7 +196,7 @@ const TransportistaDashboard: React.FC = () => {
                   <th style={styles.th}>
                     <input
                       type="checkbox"
-                      checked={clasificadas.length > 0 && seleccion.size === clasificadas.length}
+                      checked={pendientesSalida.length > 0 && seleccion.size === pendientesSalida.length}
                       onChange={alternarTodas}
                       aria-label="Seleccionar todas las pendientes"
                     />
@@ -200,7 +213,7 @@ const TransportistaDashboard: React.FC = () => {
                 {asignaciones.map((a) => (
                   <tr key={a.asignacionId} style={styles.tr}>
                     <td style={styles.td}>
-                      {a.estado === "clasificado" ? (
+                      {a.estado === "recibido" ? (
                         <input
                           type="checkbox"
                           checked={seleccion.has(a.donationId)}
@@ -208,7 +221,7 @@ const TransportistaDashboard: React.FC = () => {
                           aria-label={`Seleccionar ${a.trackingId}`}
                         />
                       ) : (
-                        <span style={styles.guion}>—</span>
+                        <span style={styles.guion}></span>
                       )}
                     </td>
                     <td style={{ ...styles.td, ...styles.codigo }}>{a.trackingId}</td>
@@ -219,7 +232,7 @@ const TransportistaDashboard: React.FC = () => {
                       <StatusBadge variant={variantePorEstado[a.estado]} />
                     </td>
                     <td style={styles.td}>
-                      {a.estado === "clasificado" && (
+                      {a.estado === "recibido" && (
                         <button style={styles.accionBtn} onClick={() => setModalTransito([a])}>
                           En tránsito
                         </button>
@@ -256,6 +269,8 @@ const TransportistaDashboard: React.FC = () => {
           onConfirm={confirmarEntrega}
           onCancel={() => setModalEntrega(null)}
         />
+      )}
+      </>
       )}
     </DashboardLayout>
   );

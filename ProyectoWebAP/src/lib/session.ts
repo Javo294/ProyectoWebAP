@@ -7,11 +7,20 @@ export interface UsuarioSesion {
 }
 
 const CLAVE_TOKEN = "sistratec_access_token";
+const CLAVE_REFRESH = "sistratec_refresh_token";
 const CLAVE_USUARIO = "sistratec_user";
 
 export function getAccessToken(): string | null {
   try {
     return window.localStorage.getItem(CLAVE_TOKEN);
+  } catch {
+    return null;
+  }
+}
+
+export function getRefreshToken(): string | null {
+  try {
+    return window.localStorage.getItem(CLAVE_REFRESH);
   } catch {
     return null;
   }
@@ -26,12 +35,20 @@ export function getCurrentUser(): UsuarioSesion | null {
   }
 }
 
-export function setSession(token: string, usuario: UsuarioSesion): void {
+export function setSession(token: string, usuario: UsuarioSesion, refreshToken?: string): void {
   window.localStorage.setItem(CLAVE_TOKEN, token);
   window.localStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
+  if (refreshToken) {
+    window.localStorage.setItem(CLAVE_REFRESH, refreshToken);
+  }
+}
+
+export function setAccessToken(token: string): void {
+  window.localStorage.setItem(CLAVE_TOKEN, token);
 }
 
 export function clearSession(): void {
   window.localStorage.removeItem(CLAVE_TOKEN);
+  window.localStorage.removeItem(CLAVE_REFRESH);
   window.localStorage.removeItem(CLAVE_USUARIO);
 }
