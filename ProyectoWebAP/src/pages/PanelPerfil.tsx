@@ -88,7 +88,11 @@ const PanelPerfil: React.FC<PanelPerfilProps> = ({ mostrarVehiculo = false, most
       setPerfil(actualizado);
       setMensaje("Tus datos se actualizaron correctamente.");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No pudimos guardar tus datos. Están a salvo, intenta de nuevo.");
+      if (err instanceof ApiError) {
+        setError(err.primerMensajeDeValidacion() ?? err.message);
+      } else {
+        setError("No pudimos guardar tus datos. Están a salvo, intenta de nuevo.");
+      }
     } finally {
       setGuardando(false);
     }
@@ -111,7 +115,11 @@ const PanelPerfil: React.FC<PanelPerfilProps> = ({ mostrarVehiculo = false, most
       setPasswordNueva("");
       setPasswordRepetir("");
     } catch (err) {
-      setErrorPass(err instanceof ApiError ? err.message : "No pudimos cambiar tu contraseña. Intenta de nuevo.");
+      if (err instanceof ApiError) {
+        setErrorPass(err.primerMensajeDeValidacion() ?? err.message);
+      } else {
+        setErrorPass("No pudimos cambiar tu contraseña. Intenta de nuevo.");
+      }
     } finally {
       setCambiandoPass(false);
     }

@@ -145,7 +145,12 @@ const DonanteDashboard: React.FC = () => {
       setPerfil(actualizado);
       setMensajePerfil("Tus datos se actualizaron correctamente.");
     } catch (err) {
-      setErrorPerfil(err instanceof ApiError ? err.message : "No pudimos guardar tus datos.");
+      if (err instanceof ApiError) {
+        const detalle = err.primerMensajeDeValidacion();
+        setErrorPerfil(detalle ?? err.message);
+      } else {
+        setErrorPerfil("No pudimos guardar tus datos.");
+      }
     } finally {
       setGuardandoPerfil(false);
     }
@@ -160,13 +165,18 @@ const DonanteDashboard: React.FC = () => {
     }
     setCambiandoPass(true);
     try {
-      await perfilService.cambiarPassword(passwordActual, passwordNueva);
+      await perfilService.cambiarPassword(passwordActual, passwordNueva, passwordRepetir);
       setMensajePass("Tu contraseña se actualizó correctamente.");
       setPasswordActual("");
       setPasswordNueva("");
       setPasswordRepetir("");
     } catch (err) {
-      setErrorPass(err instanceof ApiError ? err.message : "No pudimos cambiar tu contraseña.");
+      if (err instanceof ApiError) {
+        const detalle = err.primerMensajeDeValidacion();
+        setErrorPass(detalle ?? err.message);
+      } else {
+        setErrorPass("No pudimos cambiar tu contraseña.");
+      }
     } finally {
       setCambiandoPass(false);
     }
@@ -196,7 +206,12 @@ const DonanteDashboard: React.FC = () => {
       setEstimatedDeliveryDate("");
       cargarDonaciones();
     } catch (err) {
-      setErrorRegistro(err instanceof ApiError ? err.message : "No pudimos registrar la donación.");
+      if (err instanceof ApiError) {
+        const detalle = err.primerMensajeDeValidacion();
+        setErrorRegistro(detalle ?? err.message);
+      } else {
+        setErrorRegistro("No pudimos registrar la donación.");
+      }
     } finally {
       setRegistrando(false);
     }
@@ -277,7 +292,7 @@ const DonanteDashboard: React.FC = () => {
                 readOnly
                 style={{ ...styles.input, ...styles.inputReadOnly }}
               />
-              <span style={styles.helper}>Se completa automáticamente con tu perfil. Podés editarlo si donás a nombre de otra persona.</span>
+              <span style={styles.helper}>Se completa automáticamente con tu perfil.</span>
             </div>
 
             <div style={styles.fieldGroup}>
