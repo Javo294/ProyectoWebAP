@@ -6,7 +6,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import DetailGrid from "../components/DetailGrid";
 import StatusBadge from "../components/StatusBadge";
 import { transportistasService, donacionesService, type DonacionAdmin, type Usuario } from "../lib/sistratec";
-import { ApiError } from "../lib/api";
+import { mensajeDeError } from "../lib/api";
 
 interface AsignarTransportistaModalProps {
   donacion: DonacionAdmin;
@@ -48,9 +48,9 @@ const AsignarTransportistaModal: React.FC<AsignarTransportistaModalProps> = ({ d
         setTransportistas(datos.filter((t) => t.isActive));
         setCargando(false);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!activo) return;
-        setErrorCarga("No pudimos cargar la lista de transportistas. Tus datos están a salvo, intenta de nuevo.");
+        setErrorCarga(mensajeDeError(err));
         setCargando(false);
       });
     return () => {
@@ -67,11 +67,7 @@ const AsignarTransportistaModal: React.FC<AsignarTransportistaModalProps> = ({ d
       await donacionesService.asignar(donacion.id, transporterId, destination.trim());
       onAsignado();
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("No pudimos asignar el transportista. Tus datos están a salvo, intenta de nuevo.");
-      }
+      setError(mensajeDeError(err));
       setEnviando(false);
     }
   };

@@ -19,7 +19,7 @@ import {
   type MetricasAdmin,
 } from "../lib/sistratec";
 import { getCurrentUser } from "../lib/session";
-import { ApiError } from "../lib/api";
+import { mensajeDeError } from "../lib/api";
 
 const variantePorEstado: Record<EstadoDonacion, "recibido" | "en_transito" | "entregado"> = {
   recibido: "recibido",
@@ -117,7 +117,7 @@ const AdminDashboard: React.FC = () => {
     try {
       setMetricas(await dashboardService.metricasAdmin());
     } catch (err) {
-      setErrorMetricas(err instanceof ApiError ? err.message : "No pudimos cargar las métricas.");
+      setErrorMetricas(mensajeDeError(err));
     }
   }, []);
 
@@ -134,9 +134,7 @@ const AdminDashboard: React.FC = () => {
       setDonaciones(resp.items);
       setTotalPaginas(resp.paginacion.totalPaginas);
     } catch (err) {
-      setErrorDonaciones(
-        err instanceof ApiError ? err.message : "No pudimos cargar las donaciones. Tus datos están a salvo, intenta de nuevo."
-      );
+      setErrorDonaciones(mensajeDeError(err));
     } finally {
       setCargandoDonaciones(false);
     }
@@ -253,6 +251,7 @@ const AdminDashboard: React.FC = () => {
                     <th style={styles.th}>Tipo</th>
                     <th style={styles.th}>Donante</th>
                     <th style={styles.th}>Estado</th>
+                    <th style={styles.th}>Asignado</th>
                     <th style={styles.th}>Acciones</th>
                   </tr>
                 </thead>
@@ -266,11 +265,16 @@ const AdminDashboard: React.FC = () => {
                         <StatusBadge variant={variantePorEstado[d.estado]} />
                       </td>
                       <td style={styles.td}>
+                        <span style={{ color: d.isAssigned ? "#3fd17e" : "#f0d488", fontWeight: 600, fontSize: 13 }}>
+                          {d.isAssigned ? "Sí" : "No"}
+                        </span>
+                      </td>
+                      <td style={styles.td}>
                         <div style={styles.acciones}>
                           <button style={styles.verBtn} onClick={() => setDetalle(d)}>
                             Ver detalle
                           </button>
-                          {d.estado === "recibido" && (
+                          {d.estado === "recibido" && !d.isAssigned && (
                             <button style={styles.asignarBtn} onClick={() => setAsignando(d)}>
                               Asignar
                             </button>

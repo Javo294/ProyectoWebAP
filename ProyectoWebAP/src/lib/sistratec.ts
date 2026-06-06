@@ -12,6 +12,7 @@ export interface DonacionAdmin {
   fechaRegistro: string;
   fechaEntregado: string | null;
   origen: string;
+  isAssigned: boolean;
 }
 
 export interface Paginacion {
@@ -85,6 +86,7 @@ export const donacionesService = {
       fechaRegistro: d.createdAt ?? "",
       fechaEntregado: d.deliveredAt ?? null,
       origen: d.collectionCenterName ?? d.origen ?? "",
+      isAssigned: d.isAssigned ?? false,
     }));
     return { items, paginacion: raw.paginacion };
   },

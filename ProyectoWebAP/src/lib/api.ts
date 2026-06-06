@@ -33,6 +33,14 @@ export class ApiError extends Error {
   }
 }
 
+export function mensajeDeError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return err.primerMensajeDeValidacion() ?? err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return "Ocurrió un error inesperado.";
+}
+
 interface OpcionesPeticion {
   method?: string;
   body?: unknown;

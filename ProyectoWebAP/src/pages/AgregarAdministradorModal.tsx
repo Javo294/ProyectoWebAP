@@ -4,7 +4,7 @@ import InfoBanner from "../components/InfoBanner";
 import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
 import { administradoresService } from "../lib/sistratec";
-import { ApiError } from "../lib/api";
+import { mensajeDeError } from "../lib/api";
 
 interface AgregarAdministradorModalProps {
   onCreado: () => void;
@@ -58,8 +58,7 @@ const AgregarAdministradorModal: React.FC<AgregarAdministradorModalProps> = ({ o
       });
       onCreado();
     } catch (err) {
-      if (err instanceof ApiError) setError(err.primerMensajeDeValidacion() ?? err.message);
-      else setError("No pudimos crear la cuenta. Tus datos están a salvo, intenta de nuevo.");
+      setError(mensajeDeError(err));
       setEnviando(false);
     }
   };

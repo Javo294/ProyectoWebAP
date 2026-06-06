@@ -5,7 +5,7 @@ import PrimaryButton from "../components/PrimaryButton";
 import StatusBadge from "../components/StatusBadge";
 import { getCurrentUser } from "../lib/session";
 import { perfilService, validarNuevaPassword, type EstadoDonacion, type Usuario } from "../lib/sistratec";
-import { api, ApiError } from "../lib/api";
+import { api, ApiError, mensajeDeError } from "../lib/api";
 
 interface TipoDonacion { id: number; nombre: string }
 interface CentroAcopio { id: number; nombre: string; direccion?: string }
@@ -107,8 +107,8 @@ const DonanteDashboard: React.FC = () => {
         fechaRegistro: d.createdAt ?? "",
         destino: d.collectionCenterName ?? "",
       })));
-    } catch (err: any) {
-      setError(err.message || "No pudimos cargar tus donaciones.");
+    } catch (err) {
+      setError(mensajeDeError(err));
     } finally {
       setCargando(false);
     }
@@ -145,12 +145,7 @@ const DonanteDashboard: React.FC = () => {
       setPerfil(actualizado);
       setMensajePerfil("Tus datos se actualizaron correctamente.");
     } catch (err) {
-      if (err instanceof ApiError) {
-        const detalle = err.primerMensajeDeValidacion();
-        setErrorPerfil(detalle ?? err.message);
-      } else {
-        setErrorPerfil("No pudimos guardar tus datos.");
-      }
+      setErrorPerfil(mensajeDeError(err));
     } finally {
       setGuardandoPerfil(false);
     }
@@ -171,12 +166,7 @@ const DonanteDashboard: React.FC = () => {
       setPasswordNueva("");
       setPasswordRepetir("");
     } catch (err) {
-      if (err instanceof ApiError) {
-        const detalle = err.primerMensajeDeValidacion();
-        setErrorPass(detalle ?? err.message);
-      } else {
-        setErrorPass("No pudimos cambiar tu contraseña.");
-      }
+      setErrorPass(mensajeDeError(err));
     } finally {
       setCambiandoPass(false);
     }
@@ -206,12 +196,7 @@ const DonanteDashboard: React.FC = () => {
       setEstimatedDeliveryDate("");
       cargarDonaciones();
     } catch (err) {
-      if (err instanceof ApiError) {
-        const detalle = err.primerMensajeDeValidacion();
-        setErrorRegistro(detalle ?? err.message);
-      } else {
-        setErrorRegistro("No pudimos registrar la donación.");
-      }
+      setErrorRegistro(mensajeDeError(err));
     } finally {
       setRegistrando(false);
     }

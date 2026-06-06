@@ -14,7 +14,7 @@ import {
   type MetricasTransportista,
 } from "../lib/sistratec";
 import { getCurrentUser } from "../lib/session";
-import { ApiError } from "../lib/api";
+import { mensajeDeError } from "../lib/api";
 
 const variantePorEstado: Record<EstadoDonacion, "recibido" | "en_transito" | "entregado"> = {
   recibido: "recibido",
@@ -84,8 +84,7 @@ const TransportistaDashboard: React.FC = () => {
       setMetricas(met);
       setSeleccion(new Set());
     } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError("No pudimos cargar tus asignaciones. Tus datos están a salvo, intenta de nuevo.");
+      setError(mensajeDeError(err));
     } finally {
       setCargando(false);
     }
@@ -125,8 +124,7 @@ const TransportistaDashboard: React.FC = () => {
     } catch (err) {
       setModalTransito(null);
       setAccionEnviando(false);
-      if (err instanceof ApiError) setError(err.message);
-      else setError("No pudimos actualizar el estado. Tus datos están a salvo, intenta de nuevo.");
+      setError(mensajeDeError(err));
     }
   };
 
@@ -141,8 +139,7 @@ const TransportistaDashboard: React.FC = () => {
     } catch (err) {
       setModalEntrega(null);
       setAccionEnviando(false);
-      if (err instanceof ApiError) setError(err.message);
-      else setError("No pudimos confirmar la entrega. Tus datos están a salvo, intenta de nuevo.");
+      setError(mensajeDeError(err));
     }
   };
 

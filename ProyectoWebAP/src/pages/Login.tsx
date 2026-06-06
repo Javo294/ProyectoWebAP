@@ -4,6 +4,7 @@ import AuthCard from "../components/AuthCard";
 import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
 import { setSession } from "../lib/session";
+import { mensajeDeError } from "../lib/api";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -42,8 +43,8 @@ const Login: React.FC = () => {
       else window.location.hash = "#/";
 
       window.location.reload();
-    } catch (err: any) {
-      setErrorMensaje(err.message || "No se pudo conectar con el servidor.");
+    } catch (err) {
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }

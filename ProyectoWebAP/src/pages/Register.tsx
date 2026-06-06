@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import AppHeader from "../components/Header"; 
+import AppHeader from "../components/Header";
 import AuthCard from "../components/AuthCard";
 import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
+import { mensajeDeError } from "../lib/api";
 
 // Esquema exacto que espera recibir el backend
 interface FormState {
@@ -113,8 +114,8 @@ const Register: React.FC = () => {
         confirmPassword: "",
       });
 
-    } catch (err: any) {
-      setErrorMensaje(err.message || "No se pudo conectar con el servidor.");
+    } catch (err) {
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }

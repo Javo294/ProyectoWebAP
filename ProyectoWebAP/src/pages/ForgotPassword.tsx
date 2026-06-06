@@ -3,7 +3,7 @@ import AppHeader from "../components/Header";
 import AuthCard from "../components/AuthCard";
 import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
-import { apiRequest, ApiError } from "../lib/api";
+import { apiRequest, mensajeDeError } from "../lib/api";
 import { validarReglasPassword } from "../lib/sistratec";
 
 type Paso = "email" | "codigo" | "nueva" | "ok";
@@ -40,7 +40,7 @@ const ForgotPassword: React.FC = () => {
       setInfoMensaje("Si el correo está registrado, te enviamos un código de 6 dígitos. Revisá tu bandeja de entrada.");
       setPaso("codigo");
     } catch (err) {
-      setErrorMensaje(err instanceof ApiError ? err.message : "No pudimos procesar tu solicitud.");
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }
@@ -60,7 +60,7 @@ const ForgotPassword: React.FC = () => {
       });
       setPaso("nueva");
     } catch (err) {
-      setErrorMensaje(err instanceof ApiError ? err.message : "El código es inválido o ha expirado.");
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }
@@ -76,7 +76,7 @@ const ForgotPassword: React.FC = () => {
       });
       setInfoMensaje("Te enviamos un nuevo código a tu correo.");
     } catch (err) {
-      setErrorMensaje(err instanceof ApiError ? err.message : "No pudimos reenviar el código.");
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }
@@ -110,7 +110,7 @@ const ForgotPassword: React.FC = () => {
       });
       setPaso("ok");
     } catch (err) {
-      setErrorMensaje(err instanceof ApiError ? err.message : "No pudimos cambiar tu contraseña.");
+      setErrorMensaje(mensajeDeError(err));
     } finally {
       setCargando(false);
     }

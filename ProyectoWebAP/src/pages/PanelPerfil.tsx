@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import InputField from "../components/InputField";
 import PrimaryButton from "../components/PrimaryButton";
 import { perfilService, type Usuario } from "../lib/sistratec";
-import { api, ApiError } from "../lib/api";
+import { api, mensajeDeError } from "../lib/api";
 
 interface PanelPerfilProps {
   mostrarVehiculo?: boolean;
@@ -58,7 +58,7 @@ const PanelPerfil: React.FC<PanelPerfilProps> = ({ mostrarVehiculo = false, most
       })
       .catch((err) => {
         if (!activo) return;
-        setError(err instanceof ApiError ? err.message : "No pudimos cargar tu perfil.");
+        setError(mensajeDeError(err));
       });
     return () => {
       activo = false;
@@ -88,11 +88,7 @@ const PanelPerfil: React.FC<PanelPerfilProps> = ({ mostrarVehiculo = false, most
       setPerfil(actualizado);
       setMensaje("Tus datos se actualizaron correctamente.");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.primerMensajeDeValidacion() ?? err.message);
-      } else {
-        setError("No pudimos guardar tus datos. Están a salvo, intenta de nuevo.");
-      }
+      setError(mensajeDeError(err));
     } finally {
       setGuardando(false);
     }
@@ -115,11 +111,7 @@ const PanelPerfil: React.FC<PanelPerfilProps> = ({ mostrarVehiculo = false, most
       setPasswordNueva("");
       setPasswordRepetir("");
     } catch (err) {
-      if (err instanceof ApiError) {
-        setErrorPass(err.primerMensajeDeValidacion() ?? err.message);
-      } else {
-        setErrorPass("No pudimos cambiar tu contraseña. Intenta de nuevo.");
-      }
+      setErrorPass(mensajeDeError(err));
     } finally {
       setCambiandoPass(false);
     }

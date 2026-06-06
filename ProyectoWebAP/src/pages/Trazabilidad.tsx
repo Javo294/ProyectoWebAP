@@ -5,7 +5,7 @@ import DonationInfoCard from "../components/DonationInfoCard";
 import DonationTimeline from "../components/DonationTimeline";
 import DonationNotFound from "../components/DonationNotFound";
 import TransitDetails from "../components/TransitDetails";
-import { apiRequest, ApiError } from "../lib/api";
+import { apiRequest, ApiError, mensajeDeError } from "../lib/api";
 
 type StepStatus = "completed" | "active" | "pending";
 
@@ -112,7 +112,7 @@ const Trazabilidad: React.FC = () => {
         setViewState("notFound");
         return;
       }
-      setErrorMessage(err instanceof ApiError ? err.message : "No se pudo conectar con el servidor");
+      setErrorMessage(mensajeDeError(err));
       setViewState("error");
     } finally {
       setIsLoading(false);
