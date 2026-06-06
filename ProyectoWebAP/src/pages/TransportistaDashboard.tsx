@@ -4,6 +4,7 @@ import StatCard from "../components/StatCard";
 import StatusBadge from "../components/StatusBadge";
 import MarcarEnTransitoModal from "./MarcarEnTransitoModal";
 import ConfirmarEntregaModal from "./ConfirmarEntrega";
+import DetalleDonacionModal from "./DetalleDonacionModal";
 import PanelPerfil from "./PanelPerfil";
 import {
   asignacionesService,
@@ -70,6 +71,7 @@ const TransportistaDashboard: React.FC = () => {
 
   const [modalTransito, setModalTransito] = useState<AsignacionVista[] | null>(null);
   const [modalEntrega, setModalEntrega] = useState<AsignacionVista | null>(null);
+  const [modalDetalle, setModalDetalle] = useState<AsignacionVista | null>(null);
   const [accionEnviando, setAccionEnviando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -203,6 +205,7 @@ const TransportistaDashboard: React.FC = () => {
                   <th style={styles.th}>Origen</th>
                   <th style={styles.th}>Destino</th>
                   <th style={styles.th}>Estado</th>
+                  <th style={styles.th}>Detalle</th>
                   <th style={styles.th}>Acción</th>
                 </tr>
               </thead>
@@ -227,6 +230,11 @@ const TransportistaDashboard: React.FC = () => {
                     <td style={styles.td}>{a.destino}</td>
                     <td style={styles.td}>
                       <StatusBadge variant={variantePorEstado[a.estado]} />
+                    </td>
+                    <td style={styles.td}>
+                      <button style={styles.verBtn} onClick={() => setModalDetalle(a)}>
+                        Ver detalle
+                      </button>
                     </td>
                     <td style={styles.td}>
                       {a.estado === "recibido" && (
@@ -265,6 +273,18 @@ const TransportistaDashboard: React.FC = () => {
           descripcion={`${modalEntrega.tipo} · Destino: ${modalEntrega.destino}`}
           onConfirm={confirmarEntrega}
           onCancel={() => setModalEntrega(null)}
+        />
+      )}
+
+      {modalDetalle && (
+        <DetalleDonacionModal
+          codigo={modalDetalle.trackingId}
+          descripcion={`${modalDetalle.tipo} · Origen: ${modalDetalle.origen} · Destino: ${modalDetalle.destino}`}
+          donante={modalDetalle.donante}
+          tipo={modalDetalle.tipo}
+          fechaRegistro={new Date(modalDetalle.fechaAsignada).toLocaleDateString("es-CR")}
+          estado={modalDetalle.estado === "en_transito" ? "transito" : modalDetalle.estado === "entregado" ? "entregado" : "pendiente"}
+          onClose={() => setModalDetalle(null)}
         />
       )}
       </>
@@ -357,6 +377,17 @@ const styles: Record<string, React.CSSProperties> = {
   guion: {
     color: "#56606e",
     fontSize: "13px",
+  },
+  verBtn: {
+    padding: "8px 14px",
+    backgroundColor: "transparent",
+    color: "#00d4f5",
+    border: "1px solid #00d4f5",
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontWeight: 700,
+    fontFamily: "'Inter', sans-serif",
+    cursor: "pointer",
   },
   accionBtn: {
     padding: "8px 14px",
